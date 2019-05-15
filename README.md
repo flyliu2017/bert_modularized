@@ -1,4 +1,38 @@
-# BERT
+# BERT-modularized
+
+对bert的源码进行了简单的重构，主要是将`Processor`和`model_fn`模块化，方便使用。欢迎大家多多提交merge request。
+
+##Processor模块
+`data_processor`模块主要负责读取输入数据，并转换为tfrecord格式保存在文件里，最后构建`TFRecordDataset`作为模型的输入。  
+模块结构：  
+DataProcessor  
+- SequenceTaggingProcessor
+- SingleLabelClassificationProcessor
+- MultiLabelClassificationProcessor    
+
+`predict_tag_processor.py`和`extract_phrase_processor.py`是两个示例。
+
+大家可以根据自己的需求创建`DataProcessor`的子类，以下是子类必须实现的属性：  
+- get_train_examples  
+- get_dev_examples  
+- get_test_examples  
+- get_labels  
+- name_to_features  
+- padding_input_features  
+- convert_single_example
+- create_model
+
+其中`create_model`的功能是构建fine-tuning模型，建议将函数主体直接写在`model_fn`模块中，然后引用。
+
+
+##model_fn
+目前有3种bert中常见的`model_fn`：
+- create_sequence_tagging_model，序列标注
+- create_sequence_binary_tagging_model， 标注label只有两种时，模型结构会比上一种简单许多
+- create_classification_model， 分类
+
+
+---
 
 **\*\*\*\*\* New February 7th, 2019: TfHub Module \*\*\*\*\***
 

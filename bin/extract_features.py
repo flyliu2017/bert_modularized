@@ -23,7 +23,7 @@ import collections
 import json
 import re
 
-import modeling
+from model import modeling
 import tokenization
 import tensorflow as tf
 

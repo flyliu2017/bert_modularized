@@ -21,8 +21,8 @@ from __future__ import print_function
 import collections
 import csv
 import os
-import modeling
-import optimization
+from model import modeling
+from optimizer import optimization
 import tokenization
 import tensorflow as tf
 
