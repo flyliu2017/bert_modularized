@@ -2,6 +2,7 @@ from model import modeling
 import tensorflow as tf
 
 from optimizer import optimization
+from processor.data_processor import DataProcessor
 
 
 def create_sequence_tagging_model(bert_config, is_training, input_ids, input_mask, segment_ids,
@@ -26,42 +27,44 @@ def create_sequence_tagging_model(bert_config, is_training, input_ids, input_mas
     sequence_length = output_layer.shape[-2].value
 
     output_weights = tf.get_variable(
-        "output_weights", [hidden_size,num_labels],
+        "output_weights", [hidden_size, num_labels],
         initializer=tf.truncated_normal_initializer(stddev=0.02))
 
     output_bias = tf.get_variable(
-        "output_bias",[num_labels], initializer=tf.zeros_initializer())
+        "output_bias", [num_labels], initializer=tf.zeros_initializer())
 
     with tf.variable_scope("loss"):
         if is_training:
             # I.e., 0.1 dropout
             output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
 
-        logits=tf.matmul(tf.reshape(output_layer,[-1,hidden_size]),output_weights)  #[batch_size*sequence_length, num_labels]
-        logits=tf.reshape(logits,[-1,sequence_length,num_labels])  #[batch_size, sequence_length, num_labels]
+        logits = tf.matmul(tf.reshape(output_layer, [-1, hidden_size]),
+                           output_weights)  # [batch_size*sequence_length, num_labels]
+        logits = tf.reshape(logits, [-1, sequence_length, num_labels])  # [batch_size, sequence_length, num_labels]
         logits = tf.add(logits, output_bias)
 
-        probabilities=tf.nn.softmax(logits,axis=-1)
+        probabilities = tf.nn.softmax(logits, axis=-1)
         log_probs = tf.nn.log_softmax(logits, axis=-1)
-        input_mask = tf.cast(input_mask, tf.float32)    #[batch_size, sequence_length]
-        probabilities=tf.multiply(probabilities,tf.expand_dims(input_mask,axis=-1))  #[batch_size, sequence_length, num_labels]
+        input_mask = tf.cast(input_mask, tf.float32)  # [batch_size, sequence_length]
+        probabilities = tf.multiply(probabilities,
+                                    tf.expand_dims(input_mask, axis=-1))  # [batch_size, sequence_length, num_labels]
 
-        labels=tf.one_hot(labels,depth=num_labels,dtype=tf.float32)  #[batch_size, sequence_length, num_labels]
-        per_example_loss=-tf.multiply(log_probs,labels)               #[batch_size, sequence_length, num_labels]
-        per_example_loss=tf.reduce_sum(per_example_loss,axis=-1)     #[batch_size, sequence_length]
-        per_example_loss=tf.multiply(per_example_loss,input_mask)
-        per_example_loss=tf.reduce_sum(per_example_loss,axis=-1)     #[batch_size]
-        loss = tf.reduce_mean(per_example_loss,name='train_loss')
+        labels = tf.one_hot(labels, depth=num_labels, dtype=tf.float32)  # [batch_size, sequence_length, num_labels]
+        per_example_loss = -tf.multiply(log_probs, labels)  # [batch_size, sequence_length, num_labels]
+        per_example_loss = tf.reduce_sum(per_example_loss, axis=-1)  # [batch_size, sequence_length]
+        per_example_loss = tf.multiply(per_example_loss, input_mask)
+        per_example_loss = tf.reduce_sum(per_example_loss, axis=-1)  # [batch_size]
+        loss = tf.reduce_mean(per_example_loss, name='train_loss')
 
         return loss, per_example_loss, logits, probabilities
 
 
 def create_sequence_binary_tagging_model(bert_config, is_training, input_ids, input_mask, segment_ids,
-                 labels, num_labels, use_one_hot_embeddings):
+                                         labels, num_labels, use_one_hot_embeddings):
     """Sequence tagging model When num_labels==2,
         the fine-tuning layers can be simpler than
         'create_sequence_tagging_model'  """
-    if num_labels!=2:
+    if num_labels != 2:
         raise ValueError('num_labels must be 2. If not ,create_sequence_tagging_model should be used.')
 
     model = modeling.BertModel(
@@ -86,31 +89,32 @@ def create_sequence_binary_tagging_model(bert_config, is_training, input_ids, in
         initializer=tf.truncated_normal_initializer(stddev=0.02))
 
     output_bias = tf.get_variable(
-        "output_bias",[], initializer=tf.zeros_initializer())
+        "output_bias", [], initializer=tf.zeros_initializer())
 
     with tf.variable_scope("loss"):
         if is_training:
             # I.e., 0.1 dropout
             output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
 
-        logits = tf.reduce_sum(tf.multiply(output_layer,output_weights),-1)
+        logits = tf.reduce_sum(tf.multiply(output_layer, output_weights), -1)
         logits = tf.add(logits, output_bias)
 
-        probabilities=tf.sigmoid(logits)
+        probabilities = tf.sigmoid(logits)
         input_mask = tf.cast(input_mask, tf.float32)
-        probabilities=tf.multiply(probabilities,input_mask)
+        probabilities = tf.multiply(probabilities, input_mask)
 
-        labels=tf.cast(labels,dtype=tf.float32)
+        labels = tf.cast(labels, dtype=tf.float32)
 
-        per_example_loss=tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=logits)
-        per_example_loss=tf.multiply(per_example_loss,input_mask)
-        per_example_loss=tf.reduce_sum(per_example_loss,axis=-1)
-        loss = tf.reduce_mean(per_example_loss,name='train_loss')
+        per_example_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=logits)
+        per_example_loss = tf.multiply(per_example_loss, input_mask)
+        per_example_loss = tf.reduce_sum(per_example_loss, axis=-1)
+        loss = tf.reduce_mean(per_example_loss, name='train_loss')
 
         return loss, per_example_loss, logits, probabilities
 
+
 def create_classification_model(bert_config, is_training, input_ids, input_mask, segment_ids,
-                 labels, num_labels, use_one_hot_embeddings,multi_label=False):
+                                labels, num_labels, use_one_hot_embeddings, multi_label=False):
     """Creates a classification model."""
     model = modeling.BertModel(
         config=bert_config,
@@ -143,12 +147,12 @@ def create_classification_model(bert_config, is_training, input_ids, input_mask,
             # I.e., 0.1 dropout
             output_layer = tf.nn.dropout(output_layer, keep_prob=0.9)
 
-        logits = tf.reduce_sum(tf.multiply(output_layer,W_1),-1)
+        logits = tf.reduce_sum(tf.multiply(output_layer, W_1), -1)
         logits = tf.add(logits, b_1)
-        input_mask=tf.cast(input_mask,tf.float32)
-        logits = tf.multiply(logits,input_mask)
-        logits=tf.nn.relu(logits)
-        logits=tf.nn.xw_plus_b(logits,W_2,b_2)
+        input_mask = tf.cast(input_mask, tf.float32)
+        logits = tf.multiply(logits, input_mask)
+        logits = tf.nn.relu(logits)
+        logits = tf.nn.xw_plus_b(logits, W_2, b_2)
 
         if multi_label:
             probabilities = tf.nn.sigmoid(logits)
@@ -162,12 +166,12 @@ def create_classification_model(bert_config, is_training, input_ids, input_mask,
             per_example_loss = -tf.reduce_sum(one_hot_labels * log_probs, axis=-1)
 
         per_example_loss = tf.reduce_sum(per_example_loss, axis=-1)
-        loss = tf.reduce_mean(per_example_loss,name='train_loss')
+        loss = tf.reduce_mean(per_example_loss, name='train_loss')
 
         return loss, per_example_loss, logits, probabilities
 
 
-def model_fn_builder(processor,bert_config, num_labels, init_checkpoint, learning_rate,
+def model_fn_builder(processor: DataProcessor, bert_config, num_labels, init_checkpoint, learning_rate,
                      num_train_steps, num_warmup_steps, use_tpu,
                      use_one_hot_embeddings):
     """Returns `model_fn` closure for TPUEstimator."""
@@ -231,21 +235,8 @@ def model_fn_builder(processor,bert_config, num_labels, init_checkpoint, learnin
                 scaffold_fn=scaffold_fn)
         elif mode == tf.estimator.ModeKeys.EVAL:
 
-            #todo: add metric_fn module which contain different kinds of metrics.
-            def metric_fn(per_example_loss, label_ids, logits, is_real_example):
-                # this metric is for sequence tagging
-
-                predictions=tf.where(logits>=0,tf.ones(tf.shape(logits)),tf.zeros(tf.shape(logits)))
-                accuracy = tf.metrics.accuracy(
-                    labels=label_ids, predictions=predictions, weights=is_real_example)
-                loss = tf.metrics.mean(values=per_example_loss, weights=is_real_example)
-                return {
-                    "eval_accuracy": accuracy,
-                    "eval_loss": loss,
-                }
-
-            eval_metrics = (metric_fn,
-                            [per_example_loss, label_ids, logits, is_real_example])
+            eval_metrics = (processor.eval_metric_fn,
+                            [per_example_loss, label_ids, logits, input_mask, is_real_example])
             output_spec = tf.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
                 loss=total_loss,
@@ -255,8 +246,8 @@ def model_fn_builder(processor,bert_config, num_labels, init_checkpoint, learnin
             output_spec = tf.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
                 predictions={"probabilities": probabilities,
-                             'input_ids':input_ids,
-                             'label_ids':label_ids},
+                             'input_ids': input_ids,
+                             'label_ids': label_ids},
                 scaffold_fn=scaffold_fn)
         return output_spec
 
