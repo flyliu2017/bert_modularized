@@ -1,11 +1,14 @@
+import os
+
 from model import modeling
-import tokenization
+from tokenization import tokenization
 import tensorflow as tf
 from tensorflow.contrib.tpu import TPUEstimator
 
 from processor.data_processor import PaddingInputExample
 from model.model_fn import model_fn_builder
-from processor.extract_phrase_processor import ExtractPhrasesProcessor, ExtractPhrasesFromSegmentedInputProcessor
+from processor.extract_phrase_processor import ExtractPhrasesProcessor, ExtractPhrasesFromSegmentedInputProcessor, \
+    ExtractAllPhrasesAndTagsProcessor, ExtractAllPhrasesProcessor
 from processor.predict_tag_processor import MultiTagPredictionProcessor, SingleTagPredictionProcessor
 
 flags = tf.flags
@@ -117,6 +120,8 @@ def main(_):
         "multitag": MultiTagPredictionProcessor,
         "phrase": ExtractPhrasesProcessor,
         "seg-phrase": ExtractPhrasesFromSegmentedInputProcessor,
+        "all-phrase": ExtractAllPhrasesProcessor,
+        "phrase-and-tag" : ExtractAllPhrasesAndTagsProcessor
     }
 
     tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
