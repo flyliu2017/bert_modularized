@@ -21,9 +21,9 @@ DataProcessor
 - padding_input_features  
 - convert_single_example
 - create_model
+- eval_metric_fn
 
 其中`create_model`的功能是构建fine-tuning模型，建议将函数主体直接写在`model_fn`模块中，然后引用。
-
 
 ## model/model_fn
 目前有3种bert中常见的`model_fn`：
