@@ -1,5 +1,48 @@
 from sklearn.metrics import precision_recall_fscore_support
 import numpy as np
+import tensorflow as tf
+
+def sequence_binary_tagging_metric_fn(per_example_loss, label_ids, logits, input_mask, is_real_example):
+
+    predictions = tf.where(tf.logical_and(logits >= 0 ,input_mask==1), tf.ones(tf.shape(logits)), tf.zeros(tf.shape(logits)))
+    accuracy = tf.metrics.accuracy(
+        labels=label_ids, predictions=predictions, weights=is_real_example)
+
+    loss = tf.metrics.mean(values=per_example_loss, weights=is_real_example)
+    return {
+        "eval_accuracy": accuracy,
+        "eval_loss": loss,
+    }
+
+def sequence_tagging_metric_fn(per_example_loss, label_ids, logits, input_mask, is_real_example):
+
+    predictions=tf.argmax(logits,axis=-1)
+    predictions = tf.where(input_mask == 1, predictions, tf.fill(tf.shape(logits),-1))
+    accuracy = tf.metrics.accuracy(
+        labels=label_ids, predictions=predictions, weights=is_real_example)
+
+    loss = tf.metrics.mean(values=per_example_loss, weights=is_real_example)
+    return {
+        "eval_accuracy": accuracy,
+        "eval_loss": loss,
+    }
+
+def single_label_classification_metric_fn(per_example_loss, label_ids, logits, input_mask, is_real_example):
+
+    predictions=tf.argmax(logits,axis=-1)
+    accuracy = tf.metrics.accuracy(
+        labels=label_ids, predictions=predictions, weights=is_real_example)
+
+    loss = tf.metrics.mean(values=per_example_loss, weights=is_real_example)
+    return {
+        "eval_accuracy": accuracy,
+        "eval_loss": loss,
+    }
+
+def multi_label_tagging_metric_fn(per_example_loss, label_ids, logits, input_mask, is_real_example):
+
+    return sequence_binary_tagging_metric_fn(per_example_loss,label_ids,logits,input_mask,is_real_example)
+
 
 def report_metrics(preds,trues):
     metric_results=[]

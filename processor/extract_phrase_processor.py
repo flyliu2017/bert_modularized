@@ -1,10 +1,10 @@
 import os
 
-from processor.data_processor import InputExample, SequenceTaggingProcessor, _truncate_seq_pair, PaddingInputExample
+from processor.data_processor import InputExample, SequenceTaggingProcessor,SequenceBinaryTaggingProcessor, _truncate_seq_pair, PaddingInputExample
 from model.model_fn import create_sequence_binary_tagging_model, create_sequence_tagging_model
 
 
-class ExtractPhrasesProcessor(SequenceTaggingProcessor):
+class ExtractPhrasesProcessor(SequenceBinaryTaggingProcessor):
 
     def get_train_examples(self):
         """See base class."""
@@ -20,10 +20,6 @@ class ExtractPhrasesProcessor(SequenceTaggingProcessor):
 
     def get_labels(self):
         return ['0', '1']
-
-    @property
-    def create_model(self):
-        return create_sequence_binary_tagging_model
 
     def _create_examples(self, set_type):
         examples = []
@@ -113,16 +109,25 @@ class ExtractAllPhrasesProcessor(ExtractPhrasesProcessor):
             else:
                 raise ValueError("can't find phrase in text.")
 
-class ExtractAllPhrasesAndTagsProcessor(ExtractPhrasesProcessor):
+class ExtractAllPhrasesAndTagsProcessor(SequenceTaggingProcessor):
     """Processor for the MRPC data set (GLUE version)."""
+
+    def get_train_examples(self):
+        """See base class."""
+        return self._create_examples("train")
+
+    def get_dev_examples(self):
+        """See base class."""
+        return self._create_examples("eval")
+
+    def get_test_examples(self):
+        """See base class."""
+        return self._create_examples("test")
+
     def get_labels(self):
         with open('/data/share/liuchang/comments_dayu/tag_prediction/data/tag_vocab.txt', 'r', encoding='utf8') as f:
             tags = f.read().splitlines()
         return tags
-
-    @property
-    def create_model(self):
-        return create_sequence_tagging_model
 
     def _create_examples(self, set_type):
         """Creates examples for the training and dev sets."""

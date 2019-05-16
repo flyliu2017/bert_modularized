@@ -24,8 +24,8 @@ import csv
 import tensorflow as tf
 
 from tokenization import tokenization
-from model.model_fn import create_sequence_tagging_model, create_classification_model
-
+from model.model_fn import *
+from utils.metric_utils import *
 
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
@@ -118,6 +118,10 @@ class DataProcessor(object):
     @property
     def create_model(self):
         """Create fine-tuning model."""
+        raise NotImplementedError
+
+    @property
+    def eval_metric_fn(self):
         raise NotImplementedError
 
     @classmethod
@@ -319,9 +323,6 @@ class DataProcessor(object):
 class SequenceTaggingProcessor(DataProcessor):
     """Base class for data converters for sequence tagging data sets."""
 
-    def get_labels(self):
-        raise NotImplementedError
-
     @property
     def name_to_features(self):
         return {
@@ -344,6 +345,21 @@ class SequenceTaggingProcessor(DataProcessor):
     @property
     def create_model(self):
         return create_sequence_tagging_model
+
+    @property
+    def eval_metric_fn(self):
+        return sequence_tagging_metric_fn
+
+class SequenceBinaryTaggingProcessor(SequenceTaggingProcessor):
+    """Base class for data converters for sequence tagging data sets."""
+
+    @property
+    def create_model(self):
+        return create_sequence_binary_tagging_model
+
+    @property
+    def eval_metric_fn(self):
+        return sequence_binary_tagging_metric_fn
 
 
 class SingleLabelClassificationProcessor(DataProcessor):
@@ -371,6 +387,10 @@ class SingleLabelClassificationProcessor(DataProcessor):
     @property
     def create_model(self):
         return create_classification_model
+
+    @property
+    def eval_metric_fn(self):
+        return
 
     def create_label_features(self, example, tokens):
         label = example.label
