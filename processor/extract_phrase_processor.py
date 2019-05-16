@@ -1,7 +1,7 @@
 import os
 
 from processor.data_processor import InputExample, SequenceTaggingProcessor, _truncate_seq_pair, PaddingInputExample
-from model.model_fn import create_sequence_binary_tagging_model
+from model.model_fn import create_sequence_binary_tagging_model, create_sequence_tagging_model
 
 
 class ExtractPhrasesProcessor(SequenceTaggingProcessor):
@@ -120,6 +120,10 @@ class ExtractAllPhrasesAndTagsProcessor(ExtractPhrasesProcessor):
             tags = f.read().splitlines()
         return tags
 
+    @property
+    def create_model(self):
+        return create_sequence_tagging_model
+
     def _create_examples(self, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
@@ -138,7 +142,7 @@ class ExtractAllPhrasesAndTagsProcessor(ExtractPhrasesProcessor):
 
             tags=txt_split[1:]
             phrase_list = phrase.split(' | ')
-            phrase = [' '.join(list(n)) for n in phrase_list]
+            phrase_list = [' '.join(list(n)) for n in phrase_list]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=phrase_list, label=tags))
 
@@ -169,9 +173,9 @@ class ExtractAllPhrasesAndTagsProcessor(ExtractPhrasesProcessor):
 
         if len(input_ids) < self.max_seq_length:
             padding_length=self.max_seq_length-len(input_ids)
-            input_ids.append([0]*padding_length)
-            input_mask.append([0]*padding_length)
-            segment_ids.append([0]*padding_length)
+            input_ids.extend([0]*padding_length)
+            input_mask.extend([0]*padding_length)
+            segment_ids.extend([0]*padding_length)
 
         assert len(input_ids) == self.max_seq_length
         assert len(input_mask) == self.max_seq_length
