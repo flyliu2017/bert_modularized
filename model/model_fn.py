@@ -47,7 +47,7 @@ def create_sequence_tagging_model(bert_config, is_training, input_ids, input_mas
         probabilities=tf.multiply(probabilities,tf.expand_dims(input_mask,axis=-1))  #[batch_size, sequence_length, num_labels]
 
         labels=tf.one_hot(labels,depth=num_labels,dtype=tf.float32)  #[batch_size, sequence_length, num_labels]
-        per_example_loss=tf.multiply(log_probs,labels)               #[batch_size, sequence_length, num_labels]
+        per_example_loss=-tf.multiply(log_probs,labels)               #[batch_size, sequence_length, num_labels]
         per_example_loss=tf.reduce_sum(per_example_loss,axis=-1)     #[batch_size, sequence_length]
         per_example_loss=tf.multiply(per_example_loss,input_mask)
         per_example_loss=tf.reduce_sum(per_example_loss,axis=-1)     #[batch_size]
@@ -197,7 +197,6 @@ def model_fn_builder(processor,bert_config, num_labels, init_checkpoint, learnin
         tvars = tf.trainable_variables()
         initialized_variable_names = {}
         scaffold_fn = None
-        tf.summary.scalar('learning_rate',learning_rate)
 
         if init_checkpoint:
             (assignment_map, initialized_variable_names

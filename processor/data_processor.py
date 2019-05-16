@@ -23,7 +23,7 @@ import csv
 
 import tensorflow as tf
 
-import tokenization
+from tokenization import tokenization
 from model.model_fn import create_sequence_tagging_model, create_classification_model
 
 
@@ -222,10 +222,11 @@ class DataProcessor(object):
         input_mask = [1] * len(input_ids)
 
         # Zero-pad up to the sequence length.
-        while len(input_ids) < self.max_seq_length:
-            input_ids.append(0)
-            input_mask.append(0)
-            segment_ids.append(0)
+        if len(input_ids) < self.max_seq_length:
+            padding_length = self.max_seq_length - len(input_ids)
+            input_ids.extend([0] * padding_length)
+            input_mask.extend([0] * padding_length)
+            segment_ids.extend([0] * padding_length)
 
         assert len(input_ids) == self.max_seq_length
         assert len(input_mask) == self.max_seq_length

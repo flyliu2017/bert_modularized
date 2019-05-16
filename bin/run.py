@@ -5,10 +5,9 @@ from tokenization import tokenization
 import tensorflow as tf
 from tensorflow.contrib.tpu import TPUEstimator
 
-from processor.data_processor import PaddingInputExample
 from model.model_fn import model_fn_builder
-from processor.extract_phrase_processor import ExtractPhrasesProcessor, ExtractPhrasesFromSegmentedInputProcessor
-from processor.predict_tag_processor import MultiTagPredictionProcessor, SingleTagPredictionProcessor
+from processor.extract_phrase_processor import *
+from processor.predict_tag_processor import *
 
 flags = tf.flags
 
@@ -119,6 +118,8 @@ def main(_):
         "multitag": MultiTagPredictionProcessor,
         "phrase": ExtractPhrasesProcessor,
         "seg-phrase": ExtractPhrasesFromSegmentedInputProcessor,
+        "all-phrase": ExtractAllPhrasesProcessor,
+        "phrase-and-tag" : ExtractAllPhrasesAndTagsProcessor
     }
 
     tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
@@ -167,7 +168,6 @@ def main(_):
             len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs)
         num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion)
 
-    threthold = None
 
     model_fn = model_fn_builder(
         processor,
@@ -212,7 +212,7 @@ def main(_):
             input_file=train_file,
             is_training=True,
             drop_remainder=True)
-        train_hook = tf.train.LoggingTensorHook(['loss/train_loss', 'lr'], every_n_iter=100)
+        train_hook = tf.train.LoggingTensorHook(['loss/train_loss'], every_n_iter=100)
         estimator.train(input_fn=train_input_fn, max_steps=num_train_steps, hooks=[train_hook])
 
     if FLAGS.do_eval:
