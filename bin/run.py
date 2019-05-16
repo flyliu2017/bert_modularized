@@ -1,5 +1,7 @@
+import os
+
 from model import modeling
-import tokenization
+from tokenization import tokenization
 import tensorflow as tf
 from tensorflow.contrib.tpu import TPUEstimator
 
