@@ -213,9 +213,10 @@ def main(_):
             is_training=True,
             drop_remainder=True)
         train_hook = tf.train.LoggingTensorHook(['loss/train_loss'], every_n_iter=100)
-        estimator.train(input_fn=train_input_fn, max_steps=num_train_steps, hooks=[train_hook])
+        train_spec = tf.estimator.TrainSpec(train_input_fn, num_train_steps, [train_hook])
 
     if FLAGS.do_eval:
+
         eval_examples = processor.get_dev_examples()
         num_actual_eval_examples = len(eval_examples)
         if FLAGS.use_tpu:
@@ -229,7 +230,8 @@ def main(_):
 
         eval_file = os.path.join(FLAGS.output_dir, "eval.tf_record")
         if not tf.gfile.Exists(eval_file) or not FLAGS.data_converted:
-            processor.file_based_convert_examples_to_features(eval_examples,eval_file)
+            processor.file_based_convert_examples_to_features(
+                eval_examples, eval_file)
 
         tf.logging.info("***** Running evaluation *****")
         tf.logging.info("  Num examples = %d (%d actual, %d padding)",
@@ -246,10 +248,21 @@ def main(_):
             eval_steps = int(len(eval_examples) // FLAGS.eval_batch_size)
 
         eval_drop_remainder = True if FLAGS.use_tpu else False
-        eval_input_fn = processor.file_based_input_fn_builder(
+        eval_input_fn =processor.file_based_input_fn_builder(
             input_file=eval_file,
             is_training=False,
             drop_remainder=eval_drop_remainder)
+        eval_spec = tf.estimator.EvalSpec(eval_input_fn, steps=None, throttle_secs=60)
+
+    if FLAGS.do_train and FLAGS.do_eval:
+        tf.logging.info("***** Running training and evaluation*****")
+        tf.estimator.train_and_evaluate(estimator, train_spec, eval_spec)
+
+    elif FLAGS.do_train:
+        estimator.train(input_fn=train_input_fn, max_steps=num_train_steps, hooks=[train_hook])
+
+
+    elif FLAGS.do_eval:
 
         result = estimator.evaluate(input_fn=eval_input_fn, steps=eval_steps)
 
