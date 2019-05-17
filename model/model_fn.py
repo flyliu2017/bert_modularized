@@ -2,7 +2,6 @@ from model import modeling
 import tensorflow as tf
 
 from optimizer import optimization
-from processor.data_processor import DataProcessor
 
 
 def create_sequence_tagging_model(bert_config, is_training, input_ids, input_mask, segment_ids,
@@ -171,7 +170,7 @@ def create_classification_model(bert_config, is_training, input_ids, input_mask,
         return loss, per_example_loss, logits, probabilities
 
 
-def model_fn_builder(processor: DataProcessor, bert_config, num_labels, init_checkpoint, learning_rate,
+def model_fn_builder(processor, bert_config, num_labels, init_checkpoint, learning_rate,
                      num_train_steps, num_warmup_steps, use_tpu,
                      use_one_hot_embeddings):
     """Returns `model_fn` closure for TPUEstimator."""

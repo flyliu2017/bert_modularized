@@ -16,8 +16,8 @@ def sequence_binary_tagging_metric_fn(per_example_loss, label_ids, logits, input
 
 def sequence_tagging_metric_fn(per_example_loss, label_ids, logits, input_mask, is_real_example):
 
-    predictions=tf.argmax(logits,axis=-1)
-    predictions = tf.where(input_mask == 1, predictions, tf.fill(tf.shape(logits),-1))
+    predictions=tf.argmax(logits,axis=-1,output_type=tf.int32)
+    predictions = tf.where(input_mask == 1, predictions, tf.fill(tf.shape(predictions),-1))
     accuracy = tf.metrics.accuracy(
         labels=label_ids, predictions=predictions, weights=is_real_example)
 
@@ -63,7 +63,7 @@ def report_metrics(preds,trues):
 def precision_recall_f1score(y_true,probs,threthold_num=20):
     epsilon=1e-9
     y_true = np.array(y_true)==1
-    total_true=sum(y_true)
+    total_true=np.sum(y_true,axis=-1)
     probs=np.array(probs)
     thretholds=list(np.arange(0.,1.,1/threthold_num))+[1+epsilon]
     true=np.array([probs>=threthold for threthold in thretholds])
