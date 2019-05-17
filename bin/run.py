@@ -110,6 +110,13 @@ flags.DEFINE_integer(
     "num_tpu_cores", 8,
     "Only used if `use_tpu` is True. Total number of TPU cores to use.")
 
+flags.DEFINE_integer(
+    "throttle_secs", 600,
+    """Do not re-evaluate unless the last evaluation was
+        started at least this many seconds ago. Of course, evaluation does not
+        occur if no new checkpoints are available, hence, this is the minimum.""")
+
+
 def main(_):
     tf.logging.set_verbosity(tf.logging.INFO)
 
@@ -119,7 +126,7 @@ def main(_):
         "phrase": ExtractPhrasesProcessor,
         "seg-phrase": ExtractPhrasesFromSegmentedInputProcessor,
         "all-phrase": ExtractAllPhrasesProcessor,
-        "phrase-and-tag" : ExtractAllPhrasesAndTagsProcessor
+        "phrase-and-tag": ExtractAllPhrasesAndTagsProcessor
     }
 
     tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
@@ -147,10 +154,9 @@ def main(_):
     tokenizer = tokenization.FullTokenizer(
         vocab_file=FLAGS.vocab_file, do_lower_case=FLAGS.do_lower_case)
 
-    processor = processors[task_name](FLAGS.data_dir,tokenizer,FLAGS.max_seq_length)
+    processor = processors[task_name](FLAGS.data_dir, tokenizer, FLAGS.max_seq_length)
 
     label_list = processor.label_list
-
 
     tpu_cluster_resolver = None
     if FLAGS.use_tpu and FLAGS.tpu_name:
@@ -167,7 +173,6 @@ def main(_):
         num_train_steps = int(
             len(train_examples) / FLAGS.train_batch_size * FLAGS.num_train_epochs)
         num_warmup_steps = int(num_train_steps * FLAGS.warmup_proportion)
-
 
     model_fn = model_fn_builder(
         processor,
@@ -248,11 +253,11 @@ def main(_):
             eval_steps = int(len(eval_examples) // FLAGS.eval_batch_size)
 
         eval_drop_remainder = True if FLAGS.use_tpu else False
-        eval_input_fn =processor.file_based_input_fn_builder(
+        eval_input_fn = processor.file_based_input_fn_builder(
             input_file=eval_file,
             is_training=False,
             drop_remainder=eval_drop_remainder)
-        eval_spec = tf.estimator.EvalSpec(eval_input_fn, steps=None, throttle_secs=60)
+        eval_spec = tf.estimator.EvalSpec(eval_input_fn, steps=None, throttle_secs=FLAGS.throttle_secs)
 
     if FLAGS.do_train and FLAGS.do_eval:
         tf.logging.info("***** Running training and evaluation*****")
@@ -286,7 +291,7 @@ def main(_):
 
         predict_file = os.path.join(FLAGS.output_dir, "predict.tf_record")
         if not tf.gfile.Exists(predict_file) or not FLAGS.data_converted:
-            processor.file_based_convert_examples_to_features(predict_examples,predict_file)
+            processor.file_based_convert_examples_to_features(predict_examples, predict_file)
 
         tf.logging.info("***** Running prediction*****")
         tf.logging.info("  Num examples = %d (%d actual, %d padding)",
