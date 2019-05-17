@@ -1,6 +1,6 @@
 # BERT-modularized
 
-对bert的源码进行了简单的重构，主要是将`Processor`和`model_fn`模块化，方便使用。欢迎大家多多提交merge request。
+对bert的源码进行了简单的重构，主要是将`Processor`和`model_fn`模块化，方便使用。欢迎大家多多提交merge request。新增和修改的功能可以查询[updata_log](https://git.aipp.io/liuchang/bert_modularized/blob/master/update_log.md)
 
 ## Processor模块
 `data_processor`模块主要负责读取输入数据，并转换为tfrecord格式保存在文件里，最后构建`TFRecordDataset`作为模型的输入。  
