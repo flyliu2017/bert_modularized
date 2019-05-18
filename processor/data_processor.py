@@ -20,12 +20,17 @@ from __future__ import print_function
 
 import collections
 import csv
+import os
+import re
 
 import tensorflow as tf
 
 from tokenization import tokenization
 from model.model_fn import *
 from utils.metric_utils import *
+
+flags=tf.flags
+FLAGS=flags.FLAGS
 
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
@@ -319,6 +324,15 @@ class DataProcessor(object):
             features.append(feature)
         return features
 
+    def post_process(self, output_dir, label_ids, probabilities, input_mask, input_ids,threshold):
+        output_predict_file = os.path.join(output_dir, "test_results.tsv")
+        with tf.gfile.GFile(output_predict_file, "w") as writer:
+            tf.logging.info("***** Predict results *****")
+            for probability in probabilities:
+                output_line = "\t".join(
+                    str(class_probability)
+                    for class_probability in probability) + "\n"
+                writer.write(output_line)
 
 class SequenceTaggingProcessor(DataProcessor):
     """Base class for data converters for sequence tagging data sets."""
@@ -350,6 +364,23 @@ class SequenceTaggingProcessor(DataProcessor):
     def eval_metric_fn(self):
         return sequence_tagging_metric_fn
 
+    def post_process(self, output_dir, label_ids, probabilities, input_mask, input_ids,threshold):
+        predictions = np.argmax(probabilities, axis=-1)
+        input_mask = np.array(input_mask)
+        predictions = np.where(input_mask == 1, predictions, np.full(predictions.shape, -1))
+        with tf.gfile.GFile(os.path.join(output_dir,'predict_result.tsv'), "w") as writer:
+            for input_id,prediction in zip(input_ids, predictions):
+                for tag_id in set(list(prediction))-{-1}:
+                    tag=self.label_list[tag_id]
+                    output_tokens = [self.tokenizer.inv_vocab[id] if pred_id == tag_id else ' '
+                                     for id, pred_id in zip(input_id, prediction)]
+                    phrase=''.join(output_tokens).strip()
+                    phrase=re.sub(r' +',' ',phrase)
+                    writer.write('{}: {}\t'.format(tag,phrase))
+                writer.write('\n')
+
+        report_and_save_metrics(output_dir, label_ids, predictions,labels=list(range(len(self.label_list))))
+
 class SequenceBinaryTaggingProcessor(SequenceTaggingProcessor):
     """Base class for data converters for sequence tagging data sets."""
 
@@ -361,6 +392,21 @@ class SequenceBinaryTaggingProcessor(SequenceTaggingProcessor):
     def eval_metric_fn(self):
         return sequence_binary_tagging_metric_fn
 
+    def post_process(self, output_dir, label_ids, probabilities, input_mask, input_ids,threshold):
+        probabilities=np.array(probabilities)
+        input_mask=np.array(input_mask)
+        predictions = np.where(np.logical_and(probabilities >= threshold, input_mask == 1),
+                               np.ones(probabilities.shape),
+                               tf.zeros(probabilities.shape))
+        with tf.gfile.GFile(os.path.join(output_dir, 'predict_result.tsv'), "w") as writer:
+            for prediction in predictions:
+                output_tokens = [self.tokenizer.inv_vocab[input_id] if pred_id == 1 else ' '
+                                 for input_id, pred_id in zip(input_ids, prediction)]
+                phrase = ''.join(output_tokens).strip()
+                phrase = re.sub(r' +', ' ', phrase)
+                writer.write('{}\n'.format(phrase))
+
+        report_and_save_metrics(output_dir, label_ids, predictions)
 
 class SingleLabelClassificationProcessor(DataProcessor):
     """Base processor for the Single Label Classification data set."""
@@ -396,6 +442,15 @@ class SingleLabelClassificationProcessor(DataProcessor):
         label = example.label
         return self.label_map[label]
 
+    def post_process(self, output_dir, label_ids, probabilities, input_mask, input_ids,threshold):
+        predictions = np.argmax(probabilities, axis=-1)
+
+        with tf.gfile.GFile(os.path.join(output_dir, 'predict_result.tsv'), "w") as writer:
+            for prediction in predictions:
+                label=self.label_list[prediction]
+                writer.write('{}\n'.format(label))
+
+        report_and_save_metrics(output_dir, label_ids, predictions)
 
 class MultiLabelClassificationProcessor(DataProcessor):
     """Processor for the MRPC data set (GLUE version)."""
@@ -433,6 +488,19 @@ class MultiLabelClassificationProcessor(DataProcessor):
             label_ids[self.label_map[label]] = 1
         return label_ids
 
+    def post_process(self, output_dir, label_ids, probabilities, input_mask, input_ids,threshold):
+        probabilities=np.array(probabilities)
+        input_mask=np.array(input_mask)
+        predictions = np.where(np.logical_and(probabilities >= threshold, input_mask == 1),
+                               np.ones(probabilities.shape),
+                               tf.zeros(probabilities.shape))
+        with tf.gfile.GFile(os.path.join(output_dir, 'predict_result.tsv'), "w") as writer:
+            for prediction in predictions:
+                output_tokens = [self.label_list[i] for i,pred in enumerate(prediction) if pred==1]
+                labels = '\t'.join(output_tokens)
+                writer.write('{}\n'.format(labels))
+
+        report_and_save_metrics(output_dir, label_ids, predictions)
 
 def _truncate_seq_pair(tokens_a, tokens_b, max_length):
     """Truncates a sequence pair in place to the maximum length."""
@@ -503,3 +571,9 @@ def input_fn_builder(features, seq_length, is_training, drop_remainder):
         return d
 
     return input_fn
+
+def report_and_save_metrics(output_dir, label_ids, predictions,labels=None):
+    report = report_metrics(label_ids, predictions, labels)
+    tf.logging.info(report)
+    with tf.gfile.GFile(os.path.join(output_dir, 'test_result.tsv'), "w") as writer:
+        writer.write(report)
