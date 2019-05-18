@@ -365,12 +365,13 @@ class SequenceTaggingProcessor(DataProcessor):
         return sequence_tagging_metric_fn
 
     def post_process(self, output_dir, label_ids, probabilities, input_mask, input_ids,threshold):
+        mask_id=len(self.label_list)-1
         predictions = np.argmax(probabilities, axis=-1)
         input_mask = np.array(input_mask)
-        predictions = np.where(input_mask == 1, predictions, np.full(predictions.shape, -1))
+        predictions = np.where(input_mask == 1, predictions, np.full(predictions.shape, mask_id))
         with tf.gfile.GFile(os.path.join(output_dir,'predict_result.tsv'), "w") as writer:
             for input_id,prediction in zip(input_ids, predictions):
-                for tag_id in set(list(prediction))-{-1}:
+                for tag_id in set(list(prediction))-{mask_id}:
                     tag=self.label_list[tag_id]
                     output_tokens = [self.tokenizer.inv_vocab[id] if pred_id == tag_id else ' '
                                      for id, pred_id in zip(input_id, prediction)]

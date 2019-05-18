@@ -193,7 +193,7 @@ class ExtractAllPhrasesAndTagsProcessor(SequenceTaggingProcessor):
         tags=example.label
         tag_ids=[self.label_map[tag] for tag in tags]
 
-        label_id = [-1] * self.max_seq_length
+        label_id = [len(self.label_list)-1] * self.max_seq_length
         for phrase,tag_id in zip(phrase_list,tag_ids):
             length = len(phrase)
             for i in range(len(tokens) - length + 1):
