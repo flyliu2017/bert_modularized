@@ -127,7 +127,7 @@ class ExtractAllPhrasesAndTagsProcessor(SequenceTaggingProcessor):
     def get_labels(self):
         with open('/data/share/liuchang/comments_dayu/tag_prediction/data/tag_vocab.txt', 'r', encoding='utf8') as f:
             tags = f.read().splitlines()
-        return tags
+        return tags+['None_tag']
 
     def _create_examples(self, set_type):
         """Creates examples for the training and dev sets."""
