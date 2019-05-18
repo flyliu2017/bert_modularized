@@ -242,11 +242,13 @@ def model_fn_builder(processor, bert_config, num_labels, init_checkpoint, learni
                 eval_metrics=eval_metrics,
                 scaffold_fn=scaffold_fn)
         else:
+
             output_spec = tf.contrib.tpu.TPUEstimatorSpec(
                 mode=mode,
                 predictions={"probabilities": probabilities,
                              'input_ids': input_ids,
-                             'label_ids': label_ids},
+                             'label_ids': label_ids,
+                             'input_mask': input_mask},
                 scaffold_fn=scaffold_fn)
         return output_spec
 

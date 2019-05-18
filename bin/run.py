@@ -305,23 +305,13 @@ def main(_):
             is_training=False,
             drop_remainder=predict_drop_remainder)
 
-        result = estimator.predict(input_fn=predict_input_fn)
+        results = estimator.predict(input_fn=predict_input_fn)
 
-        output_predict_file = os.path.join(FLAGS.output_dir, "test_results.tsv")
-        with tf.gfile.GFile(output_predict_file, "w") as writer:
-            num_written_lines = 0
-            tf.logging.info("***** Predict results *****")
-            for (i, prediction) in enumerate(result):
-                probabilities = prediction["probabilities"]
-                if i >= num_actual_predict_examples:
-                    break
-                output_line = "\t".join(
-                    str(class_probability)
-                    for class_probability in probabilities) + "\n"
-                writer.write(output_line)
-                num_written_lines += 1
-        assert num_written_lines == num_actual_predict_examples
+        metrics=[ (result['probabilities'],result['input_ids'],result['label_ids'],result['input_mask'])
+                                        for result in results]
+        probabilities,input_ids,label_ids,input_mask=list(zip(*metrics))
 
+        processor.post_process(FLAGS.output_dir,label_ids,probabilities,input_mask,input_ids,0.5)
 
 if __name__ == "__main__":
     flags.mark_flag_as_required("data_dir")
