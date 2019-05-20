@@ -75,9 +75,16 @@ def threshold_selection(y_true, probs, threshold_num=20,f1_weight=0.5):
 
 def numpy_metrics_at_thresholds(y_true, probs,  threshold_num=20, threshold=0.5):
     epsilon = 1e-9
-    y_true = np.array(y_true) == 1
-    total_true = np.sum(y_true, axis=-1)
     probs = np.array(probs)
+    y_true = np.array(y_true)
+    assert y_true.shape==probs.shape
+
+    if probs.ndim==1:
+        probs=np.expand_dims(probs,0)
+        y_true=np.expand_dims(y_true,0)
+
+    y_true = y_true == 1
+    total_true = np.sum(y_true, axis=-1)
 
     if threshold_num:
         assert threshold_num > 1
@@ -90,7 +97,7 @@ def numpy_metrics_at_thresholds(y_true, probs,  threshold_num=20, threshold=0.5)
     true = np.array([probs >= threshold for threshold in thresholds])
 
     accuracy = get_accuracy(y_true,true)
-    tps = np.sum(y_true and true, -1)
+    tps = np.sum(y_true & true, -1)
     precisions = tps / (np.sum(true, -1) + epsilon)
     recalls = tps / total_true
     f1scores = 2 * precisions * recalls / (precisions + recalls + epsilon)
