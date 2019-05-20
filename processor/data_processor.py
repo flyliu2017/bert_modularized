@@ -380,7 +380,7 @@ class SequenceTaggingProcessor(DataProcessor):
                     writer.write('{}: {}\t'.format(tag,phrase))
                 writer.write('\n')
 
-        report_and_save_metrics(output_dir, label_ids, predictions,labels=list(range(len(self.label_list))))
+        report_and_save_metrics(output_dir, label_ids, predictions,labels=list(range(len(self.label_list)-1)))
 
 class SequenceBinaryTaggingProcessor(SequenceTaggingProcessor):
     """Base class for data converters for sequence tagging data sets."""
