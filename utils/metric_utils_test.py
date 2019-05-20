@@ -1,6 +1,6 @@
 import unittest
 
-from utils.metric_utils import numpy_metrics_at_thresholds
+from utils.metric_utils import numpy_metrics_at_thresholds,threshold_selection
 import numpy as np
 
 class MetricTest(unittest.TestCase):
@@ -19,6 +19,14 @@ class MetricTest(unittest.TestCase):
         self.assertTrue(equal(precisions, [0.5,0]))
         self.assertTrue(equal(recalls, [1,0]))
         self.assertTrue(equal(f1scores, [2/3,0]))
+
+    def test_threshold_selection(self):
+        trues = [[0, 1], [1, 1]]
+        probs = [[0.2, 0.5], [0.3, 0.9]]
+        threshold=threshold_selection(trues,probs,threshold_num=2)
+        self.assertEqual(threshold,-1e-9)
+        threshold=threshold_selection(trues[0],probs[0],threshold_num=3)
+        self.assertEqual(threshold,0.5)
 
 def equal(list1,list2):
     list1=np.array(list1)
