@@ -20,9 +20,11 @@ def sequence_tagging_metric_fn(per_example_loss, label_ids, logits, input_mask, 
     """In default, use num_label-1 as mask id."""
     num_label=logits.shape[-1].value
     predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)
-    predictions = tf.where(input_mask == 1, predictions, tf.fill(tf.shape(predictions), num_label-1))
+    shape = tf.shape(predictions)
+    predictions = tf.where(input_mask == 1, predictions, tf.fill(shape, num_label - 1))
+    weights=tf.where(predictions==num_label-1 ,tf.zeros(shape),tf.ones(shape))
     accuracy = tf.metrics.accuracy(
-        labels=label_ids, predictions=predictions, weights=is_real_example)
+        labels=label_ids, predictions=predictions, weights=weights)
 
     loss = tf.metrics.mean(values=per_example_loss, weights=is_real_example)
     return {
