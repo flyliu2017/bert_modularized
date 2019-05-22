@@ -116,6 +116,10 @@ flags.DEFINE_integer(
         started at least this many seconds ago. Of course, evaluation does not
         occur if no new checkpoints are available, hence, this is the minimum.""")
 
+flags.DEFINE_string(
+    'from_file',None,
+    "if not None,do prediction with this file as input."
+)
 
 def main(_):
     tf.logging.set_verbosity(tf.logging.INFO)
