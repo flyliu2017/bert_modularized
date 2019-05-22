@@ -103,6 +103,10 @@ class DataProcessor(object):
         raise NotImplementedError()
 
     def get_test_examples(self):
+        """Gets a collection of `InputExample`s for the test set."""
+        raise NotImplementedError()
+
+    def get_prediction_examples(self,input_file):
         """Gets a collection of `InputExample`s for prediction."""
         raise NotImplementedError()
 
@@ -454,7 +458,7 @@ class SingleLabelClassificationProcessor(DataProcessor):
         report_and_save_metrics(output_dir, label_ids, predictions)
 
 class MultiLabelClassificationProcessor(DataProcessor):
-    """Processor for the MRPC data set (GLUE version)."""
+    """Base processor for the Multi Label Classification data set."""
 
     @property
     def name_to_features(self):

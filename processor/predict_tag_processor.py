@@ -53,6 +53,15 @@ class MultiTagPredictionProcessor(MultiLabelClassificationProcessor):
         """See base class."""
         return self._create_examples("test")
 
+    def get_prediction_examples(self,input_file):
+        with open(input_file, 'r', encoding='utf8') as f:
+            phrases = f.read().splitlines()
+        examples=[ InputExample(guid=str(i), text_a=phrase, text_b=None, label=[])
+                    for i,phrase in enumerate(phrases)]
+
+        return examples
+
+
     def get_labels(self):
         ret = []
         for line in self._read_tsv("/data/share/liuchang/comments_dayu/tag_prediction/data/tag_vocab.txt"):

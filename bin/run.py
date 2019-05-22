@@ -279,7 +279,10 @@ def main(_):
                 writer.write("%s = %s\n" % (key, str(result[key])))
 
     if FLAGS.do_predict:
-        predict_examples = processor.get_test_examples()
+        if FLAGS.predict_from_file:
+            predict_examples=processor.get_prediction_examples(FLAGS.predict_from_file)
+        else:
+            predict_examples = processor.get_test_examples()
         num_actual_predict_examples = len(predict_examples)
         if FLAGS.use_tpu:
             # TPU requires a fixed batch size for all batches, therefore the number
