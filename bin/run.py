@@ -117,7 +117,7 @@ flags.DEFINE_integer(
         occur if no new checkpoints are available, hence, this is the minimum.""")
 
 flags.DEFINE_string(
-    'from_file',None,
+    'predict_from_file',None,
     "if not None,do prediction with this file as input."
 )
 
