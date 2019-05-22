@@ -402,11 +402,11 @@ class SequenceBinaryTaggingProcessor(SequenceTaggingProcessor):
         input_mask=np.array(input_mask)
         predictions = np.where(np.logical_and(probabilities >= threshold, input_mask == 1),
                                np.ones(probabilities.shape),
-                               tf.zeros(probabilities.shape))
+                               np.zeros(probabilities.shape))
         with tf.gfile.GFile(os.path.join(output_dir, 'predict_result.tsv'), "w") as writer:
-            for prediction in predictions:
-                output_tokens = [self.tokenizer.inv_vocab[input_id] if pred_id == 1 else ' '
-                                 for input_id, pred_id in zip(input_ids, prediction)]
+            for input_id, prediction in zip(input_ids, predictions):
+                output_tokens = [self.tokenizer.inv_vocab[id] if pred_id == 1 else ' '
+                                 for id, pred_id in zip(input_id, prediction)]
                 phrase = ''.join(output_tokens).strip()
                 phrase = re.sub(r' +', ' ', phrase)
                 writer.write('{}\n'.format(phrase))
@@ -495,10 +495,9 @@ class MultiLabelClassificationProcessor(DataProcessor):
 
     def post_process(self, output_dir, label_ids, probabilities, input_mask, input_ids,threshold):
         probabilities=np.array(probabilities)
-        input_mask=np.array(input_mask)
-        predictions = np.where(np.logical_and(probabilities >= threshold, input_mask == 1),
+        predictions = np.where(probabilities >= threshold,
                                np.ones(probabilities.shape),
-                               tf.zeros(probabilities.shape))
+                               np.zeros(probabilities.shape))
         with tf.gfile.GFile(os.path.join(output_dir, 'predict_result.tsv'), "w") as writer:
             for prediction in predictions:
                 output_tokens = [self.label_list[i] for i,pred in enumerate(prediction) if pred==1]
