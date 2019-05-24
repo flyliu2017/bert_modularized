@@ -22,7 +22,7 @@ def sequence_tagging_metric_fn(per_example_loss, label_ids, logits, input_mask, 
     predictions = tf.argmax(logits, axis=-1, output_type=tf.int32)
     shape = tf.shape(predictions)
     predictions = tf.where(input_mask == 1, predictions, tf.fill(shape, num_label - 1))
-    weights=tf.where(predictions==num_label-1 ,tf.zeros(shape),tf.ones(shape))
+    weights=tf.where(label_ids==num_label-1 ,tf.zeros(shape),tf.ones(shape))
     accuracy = tf.metrics.accuracy(
         labels=label_ids, predictions=predictions, weights=weights)
 
