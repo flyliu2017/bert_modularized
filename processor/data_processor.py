@@ -445,7 +445,7 @@ class SingleLabelClassificationProcessor(DataProcessor):
 
     def create_label_features(self, example, tokens):
         label = example.label
-        return self.label_map[label]
+        return [self.label_map[label]]
 
     def post_process(self, output_dir, label_ids, probabilities, input_mask, input_ids,threshold):
         predictions = np.argmax(probabilities, axis=-1)
