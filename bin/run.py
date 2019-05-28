@@ -1,6 +1,7 @@
 import os
 
 from model import modeling
+from processor.weitao_sku_processor import AlimamaTitleClassificationPorcessor
 from tokenization import tokenization
 import tensorflow as tf
 from tensorflow.contrib.tpu import TPUEstimator
@@ -130,7 +131,8 @@ def main(_):
         "phrase": ExtractPhrasesProcessor,
         "seg-phrase": ExtractPhrasesFromSegmentedInputProcessor,
         "all-phrase": ExtractAllPhrasesProcessor,
-        "phrase-and-tag": ExtractAllPhrasesAndTagsProcessor
+        "phrase-and-tag": ExtractAllPhrasesAndTagsProcessor,
+        "alimama": AlimamaTitleClassificationPorcessor
     }
 
     tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
