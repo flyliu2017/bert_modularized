@@ -441,7 +441,7 @@ class SingleLabelClassificationProcessor(DataProcessor):
 
     @property
     def eval_metric_fn(self):
-        return
+        return single_label_classification_metric_fn
 
     def create_label_features(self, example, tokens):
         label = example.label
