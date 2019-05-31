@@ -486,6 +486,10 @@ class MultiLabelClassificationProcessor(DataProcessor):
 
         return multi_label_model
 
+    @property
+    def eval_metric_fn(self):
+        return multi_label_tagging_metric_fn
+
     def create_label_features(self, example, tokens):
         labels = example.label
         label_ids = [0] * len(self.label_list)
