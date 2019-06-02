@@ -49,10 +49,8 @@ def multi_label_tagging_metric_fn(per_example_loss, label_ids, logits, input_mas
     return sequence_binary_tagging_metric_fn(per_example_loss, label_ids, logits, input_mask, is_real_example)
 
 
-def report_metrics(trues,preds,labels=None):
-    if labels is None:
-        labels=[1]
-    metric_results=[precision_recall_fscore_support(true, pred,labels=labels, average='micro')
+def report_metrics(trues, preds, labels_list=None):
+    metric_results=[precision_recall_fscore_support(true, pred, labels=labels_list, average='micro')
                                                     for pred, true in zip(preds, trues)]
 
     precision, recall, fscore, _ = list(zip(*metric_results))

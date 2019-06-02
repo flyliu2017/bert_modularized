@@ -384,7 +384,7 @@ class SequenceTaggingProcessor(DataProcessor):
                     writer.write('{}: {}\t'.format(tag,phrase))
                 writer.write('\n')
 
-        report_and_save_metrics(output_dir, label_ids, predictions,labels=list(range(len(self.label_list)-1)))
+        report_and_save_metrics(output_dir, label_ids, predictions, labels_list=list(range(len(self.label_list) - 1)))
 
 class SequenceBinaryTaggingProcessor(SequenceTaggingProcessor):
     """Base class for data converters for sequence tagging data sets."""
@@ -411,7 +411,7 @@ class SequenceBinaryTaggingProcessor(SequenceTaggingProcessor):
                 phrase = re.sub(r' +', ' ', phrase)
                 writer.write('{}\n'.format(phrase))
 
-        report_and_save_metrics(output_dir, label_ids, predictions)
+        report_and_save_metrics(output_dir, label_ids, predictions,labels_list=[1])
 
 class SingleLabelClassificationProcessor(DataProcessor):
     """Base processor for the Single Label Classification data set."""
@@ -580,8 +580,8 @@ def input_fn_builder(features, seq_length, is_training, drop_remainder):
 
     return input_fn
 
-def report_and_save_metrics(output_dir, label_ids, predictions,labels=None):
-    report = report_metrics(label_ids, predictions, labels)
+def report_and_save_metrics(output_dir, label_ids, predictions, labels_list=None):
+    report = report_metrics(label_ids, predictions, labels_list)
     tf.logging.info(report)
     with tf.gfile.GFile(os.path.join(output_dir, 'test_result.tsv'), "w") as writer:
         writer.write(report)
