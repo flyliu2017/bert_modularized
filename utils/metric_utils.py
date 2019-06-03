@@ -50,11 +50,18 @@ def multi_label_tagging_metric_fn(per_example_loss, label_ids, logits, input_mas
 
 
 def report_metrics(trues, preds, labels_list=None):
-    metric_results=[precision_recall_fscore_support(true, pred, labels=labels_list, average='micro')
-                                                    for pred, true in zip(preds, trues)]
+    trues=np.array(trues)
+    preds=np.array(preds)
+    assert trues.shape==preds.shape
+    if trues.ndim==1:
+        precision, recall, fscore, _=precision_recall_fscore_support(trues,preds,average='micro')
+    else:
+        metric_results=[precision_recall_fscore_support(true, pred, labels=labels_list, average='micro')
+                                                        for pred, true in zip(preds, trues)]
 
-    precision, recall, fscore, _ = list(zip(*metric_results))
-    precision, recall, fscore=np.apply_along_axis(np.mean,1,[precision, recall, fscore])
+        precision, recall, fscore, _ = list(zip(*metric_results))
+        precision, recall, fscore=np.apply_along_axis(np.mean,1,[precision, recall, fscore])
+
     accuracy=get_accuracy(trues,preds)
 
     report = 'accuracy: {}\n'.format(accuracy) + \
