@@ -1,6 +1,7 @@
 import os
 
 from model import modeling
+from processor.intent_classification import IntentClassificationProcessor
 from processor.weitao_sku_processor import AlimamaTitleClassificationPorcessor
 from tokenization import tokenization
 import tensorflow as tf
@@ -132,7 +133,8 @@ def main(_):
         "seg-phrase": ExtractPhrasesFromSegmentedInputProcessor,
         "all-phrase": ExtractAllPhrasesProcessor,
         "phrase-and-tag": ExtractAllPhrasesAndTagsProcessor,
-        "alimama": AlimamaTitleClassificationPorcessor
+        "alimama": AlimamaTitleClassificationPorcessor,
+        'intent': IntentClassificationProcessor
     }
 
     tokenization.validate_case_matches_checkpoint(FLAGS.do_lower_case,
