@@ -1,7 +1,8 @@
 import os
 
-from processor.data_processor import MultiLabelClassificationProcessor, InputExample
-
+from processor.data_processor import MultiLabelClassificationProcessor, InputExample, threshold_selection
+import numpy as np
+import tensorflow as tf
 
 class IntentClassificationProcessor(MultiLabelClassificationProcessor):
     def get_train_examples(self):
@@ -43,3 +44,8 @@ class IntentClassificationProcessor(MultiLabelClassificationProcessor):
                 InputExample(guid=guid, text_a=content, text_b=seq, label=intents))
 
         return examples
+
+    def post_process(self, output_dir, label_ids, probabilities, input_mask, input_ids,threshold):
+        best_threshold,best_metrics=threshold_selection(label_ids,probabilities)
+        tf.logging.info('best_threshold:{}'.format(best_threshold))
+        super().post_process(output_dir, label_ids, probabilities, input_mask, input_ids,best_threshold)

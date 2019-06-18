@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 python -m bin.run --task_name=intent \
-                    --do_train=true \
-                    --do_eval=true \
+                    --do_predict=true \
                     --data_dir=/data/share/liuchang/intent/ \
                     --vocab_file=/data/share/ludezheng/bert/chinese_L-12_H-768_A-12/vocab.txt \
                     --bert_config_file=/data/share/ludezheng/bert/chinese_L-12_H-768_A-12/bert_config.json \
