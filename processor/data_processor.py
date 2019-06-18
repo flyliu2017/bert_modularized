@@ -28,6 +28,7 @@ import tensorflow as tf
 from tokenization import tokenization
 from model.model_fn import *
 from utils.metric_utils import *
+from sklearn.metrics import classification_report
 
 flags=tf.flags
 FLAGS=flags.FLAGS
@@ -502,13 +503,20 @@ class MultiLabelClassificationProcessor(DataProcessor):
         predictions = np.where(probabilities >= threshold,
                                np.ones(probabilities.shape),
                                np.zeros(probabilities.shape))
+
         with tf.gfile.GFile(os.path.join(output_dir, 'predict_result.tsv'), "w") as writer:
-            for prediction in predictions:
+            for prediction,probability in zip(predictions,probabilities):
+                if np.all(prediction==0):
+                    prediction[np.argmax(probability)]=1
                 output_tokens = [self.label_list[i] for i,pred in enumerate(prediction) if pred==1]
                 labels = '\t'.join(output_tokens)
                 writer.write('{}\n'.format(labels))
 
         report_and_save_metrics(output_dir, label_ids, predictions)
+        metrics=classification_report(y_true=np.asarray(label_ids),y_pred=predictions,target_names=self.label_list)
+        with open(os.path.join(output_dir,'metrics'), 'w', encoding='utf8') as f:
+            f.write(metrics)
+        tf.logging.info(metrics)
 
 def _truncate_seq_pair(tokens_a, tokens_b, max_length):
     """Truncates a sequence pair in place to the maximum length."""
