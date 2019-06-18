@@ -70,17 +70,21 @@ def report_metrics(trues, preds, labels_list=None):
              'fscore: {}\n'.format(fscore)
     return report
 
-def threshold_selection(y_true, probs, threshold_num=20,f1_weight=0.5):
+def threshold_selection(y_true, probs, threshold_num=21,f1_weight=0.5):
     assert threshold_num>1
-    accuracy, precisions, recalls, f1scores,thresholds=numpy_metrics_at_thresholds(y_true, probs,
-                                                                        threshold_num=threshold_num)
+    metrics=numpy_metrics_at_thresholds(y_true, probs,threshold_num=threshold_num)
+    accuracy, precisions, recalls, f1scores,thresholds=metrics
+
     score=f1_weight*f1scores+accuracy*(1-f1_weight)
-    best=thresholds[np.argmax(score)]
+    index = np.argmax(score)
+    best=thresholds[index]
+    best_metrics=np.asarray(metrics)[:,index]
+    best_metrics=np.reshape(best_metrics,[-1])
     tf.logging.info("best threshold is {}".format(best))
-    return best
+    return best,best_metrics
 
 
-def numpy_metrics_at_thresholds(y_true, probs,  threshold_num=20, threshold=0.5):
+def numpy_metrics_at_thresholds(y_true, probs,  threshold_num=21, threshold=0.5):
     epsilon = 1e-9
     probs = np.array(probs)
     y_true = np.array(y_true)
